@@ -1,0 +1,13 @@
+# LangChain/LangSmith configuration file
+
+# Project configurations
+project_name: "langgraph-cua-agent"
+
+# LangSmith settings
+langsmith:
+  tracing_v2: true
+  tracing_enabled: true
+
+# Default LangGraph callbacks
+callbacks:
+  traceable: true

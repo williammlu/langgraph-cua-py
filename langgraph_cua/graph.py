@@ -6,6 +6,9 @@ from langgraph.graph import END, START, StateGraph
 from langgraph_cua.nodes import call_model, create_vm_instance, take_computer_action
 from langgraph_cua.types import CUAConfiguration, CUAState
 from langgraph_cua.utils import is_computer_tool_call
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def take_action_or_end(state: CUAState):
@@ -82,12 +85,16 @@ def create_cua(
     auth_state_id: str = None,
     environment: Literal["web", "ubuntu", "windows"] = "web",
     prompt: Union[str, SystemMessage] = None,
+    use_local_playwright: bool = False,
+    headless: bool = False,
+    browser_type: Literal["chromium", "firefox", "webkit"] = "chromium",
 ):
     """Configuration for the Computer Use Agent.
 
     Attributes:
         scrapybara_api_key: The API key to use for Scrapybara.
             This can be provided in the configuration, or set as an environment variable (SCRAPYBARA_API_KEY).
+            Not required if use_local_playwright is True.
         timeout_hours: The number of hours to keep the virtual machine running before it times out.
             Must be between 0.01 and 24. Default is 1.
         zdr_enabled: Whether or not Zero Data Retention is enabled in the user's OpenAI account. If True,
@@ -98,6 +105,14 @@ def create_cua(
         auth_state_id: The ID of the authentication state. If defined, it will be used to authenticate
             with Scrapybara. Only applies if 'environment' is set to 'web'.
         environment: The environment to use. Default is "web".
+        prompt: The initial prompt to use for the conversation. Will be passed as a system message.
+        use_local_playwright: Whether to use a local Playwright instance instead of Scrapybara.
+            If True, a local Playwright browser will be used. Default is False.
+        headless: Whether to run the local Playwright browser in headless mode.
+            Only used if use_local_playwright is True. Default is False.
+        browser_type: The type of browser to use with local Playwright.
+            Options are "chromium", "firefox", or "webkit". Default is "chromium".
+            Only used if use_local_playwright is True.
     """
     # Validate timeout_hours is within acceptable range
     if timeout_hours < 0.01 or timeout_hours > 24:
@@ -113,6 +128,9 @@ def create_cua(
                 "auth_state_id": auth_state_id,
                 "environment": environment,
                 "prompt": prompt,
+                "use_local_playwright": use_local_playwright,
+                "headless": headless,
+                "browser_type": browser_type,
             },
             "recursion_limit": recursion_limit,
         }
@@ -121,4 +139,45 @@ def create_cua(
     return configured_graph
 
 
-__all__ = ["create_cua", "graph"]
+# Create a pre-configured instance with local Playwright for use with `langgraph dev`
+# Include a helpful system message that will be added to the initial state
+system_message = """
+You're an advanced AI computer use assistant. You can control a web browser to help users complete tasks online.
+The browser should be initialized to Google.com, but if you see a blank page or any other page, first navigate to Google.com 
+by typing the URL in the address bar or using the search functionality.
+
+You can perform actions like:
+- Clicking on elements using their coordinates
+- Typing text into forms
+- Taking screenshots of the current page
+- Navigating to URLs
+- Scrolling the page
+
+Always verify what page you're on before attempting tasks, and navigate to appropriate sites when needed.
+If the browser appears to be on a blank page, try navigating to Google.com first by typing the URL.
+
+Browser navigation tips:
+- If you see a blank page, look for an address bar to type into
+- To navigate to a site, type the full URL (e.g., 'https://www.google.com')
+- Always take a screenshot after each action to see the current state
+- If you're stuck, try clicking in the center of the page first, then try typing
+"""
+
+playwright_configured_graph = graph.with_config(
+    config={
+        "configurable": {
+            "scrapybara_api_key": None,
+            "timeout_hours": 1.0,
+            "zdr_enabled": False,
+            "auth_state_id": None,
+            "environment": "web",
+            "prompt": SystemMessage(content=system_message),
+            "use_local_playwright": True,
+            "headless": False,
+            "browser_type": "chromium",
+        },
+        "recursion_limit": 100,
+    }
+)
+
+__all__ = ["create_cua", "graph", "playwright_configured_graph"]

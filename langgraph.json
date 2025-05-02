@@ -1,0 +1,78 @@
+{
+  "config_version": 1,
+  "dependencies": ["langgraph_cua"],
+  "graphs": {
+    "cua": "langgraph_cua.graph:playwright_configured_graph"
+  },
+  "title": "Computer User Agent (CUA)",
+  "description": "A computer user agent that controls a browser using local Playwright",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "messages": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "type": "string",
+              "enum": ["system", "user", "assistant", "tool"]
+            },
+            "content": {
+              "type": "string"
+            }
+          },
+          "required": ["role", "content"]
+        }
+      }
+    },
+    "required": ["messages"]
+  },
+  "examples": [
+    {
+      "name": "Search for Tires",
+      "input": {
+        "messages": [
+          {
+            "role": "system",
+            "content": "You're an advanced AI computer use assistant. You can control a web browser to help users complete tasks online. The browser should be initialized to Google.com, but if you see a blank page or any other page, first navigate to Google.com by typing the URL in the address bar or using the search functionality.\n\nYou can perform actions like:\n- Clicking on elements using their coordinates\n- Typing text into forms\n- Taking screenshots of the current page\n- Navigating to URLs\n- Scrolling the page\n\nAlways verify what page you're on before attempting tasks, and navigate to appropriate sites when needed. If the browser appears to be on a blank page, try navigating to Google.com first by typing the URL."
+          },
+          {
+            "role": "user",
+            "content": "Can you find the best price for new all season tires which will fit on my 2019 Subaru Forester?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Read Latest News",
+      "input": {
+        "messages": [
+          {
+            "role": "system",
+            "content": "You're an advanced AI computer use assistant. You can control a web browser to help users complete tasks online. The browser should be initialized to Google.com, but if you see a blank page or any other page, first navigate to Google.com by typing the URL in the address bar or using the search functionality.\n\nYou can perform actions like:\n- Clicking on elements using their coordinates\n- Typing text into forms\n- Taking screenshots of the current page\n- Navigating to URLs\n- Scrolling the page\n\nAlways verify what page you're on before attempting tasks, and navigate to appropriate sites when needed. If the browser appears to be on a blank page, try navigating to Google.com first by typing the URL."
+          },
+          {
+            "role": "user",
+            "content": "Visit BBC News and tell me the most recent headline."
+          }
+        ]
+      }
+    },
+    {
+      "name": "Navigate from Blank Screen",
+      "input": {
+        "messages": [
+          {
+            "role": "system",
+            "content": "You're an advanced AI computer use assistant. You can control a web browser to help users complete tasks online. If you see a blank page or any other unexpected page, your first action should be to navigate to Google.com by typing the URL in the address bar.\n\nYou can perform actions like:\n- Clicking on elements using their coordinates\n- Typing text into forms\n- Taking screenshots of the current page\n- Navigating to URLs\n- Scrolling the page\n\nBrowser navigation tips:\n- If you see a blank page, look for an address bar to type into\n- To navigate to a site, type the full URL (e.g., 'https://www.google.com')\n- Always take a screenshot after each action to see the current state\n- If you're stuck, try clicking in the center of the page first, then try typing"
+          },
+          {
+            "role": "user",
+            "content": "I want to check the weather forecast for San Francisco. The browser seems to be showing a blank page."
+          }
+        ]
+      }
+    }
+  ]
+}

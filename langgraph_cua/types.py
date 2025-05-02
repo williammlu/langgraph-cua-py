@@ -64,8 +64,6 @@ class CUAConfiguration(TypedDict):
     """Configuration for the Computer Use Agent.
 
     Attributes:
-        scrapybara_api_key: The API key to use for Scrapybara.
-            This can be provided in the configuration, or set as an environment variable (SCRAPYBARA_API_KEY).
         timeout_hours: The number of hours to keep the virtual machine running before it times out.
             Must be between 0.01 and 24. Default is 1.
         zdr_enabled: Whether or not Zero Data Retention is enabled in the user's OpenAI account. If True,
@@ -76,10 +74,16 @@ class CUAConfiguration(TypedDict):
             with Scrapybara. Only applies if 'environment' is set to 'web'.
         environment: The environment to use. Default is "web".
         prompt: The initial prompt to use for the conversation. Will
-            be passed as a system message
+            be passed as a system message.
+        use_local_playwright: Whether to use a local Playwright instance instead of Scrapybara.
+            If True, a local Playwright browser will be used. Default is False.
+        headless: Whether to run the local Playwright browser in headless mode.
+            Only used if use_local_playwright is True. Default is False.
+        browser_type: The type of browser to use with local Playwright.
+            Options are "chromium", "firefox", or "webkit". Default is "chromium".
+            Only used if use_local_playwright is True.
     """
 
-    scrapybara_api_key: Optional[str]  # API key for Scrapybara
     timeout_hours: Optional[float]  # Timeout in hours (0.01-24, default: 1)
     zdr_enabled: Optional[bool]  # True/False for whether or not ZDR is enabled.
     auth_state_id: Optional[str]  # The ID of the authentication state.
@@ -87,6 +91,9 @@ class CUAConfiguration(TypedDict):
         Literal["web", "ubuntu", "windows"]
     ]  # The environment to use. Default is "web".
     prompt: Optional[Union[str, SystemMessage]]  # The initial prompt to use for the conversation
+    use_local_playwright: Optional[bool]  # Whether to use a local Playwright instance
+    headless: Optional[bool]  # Whether to run the browser in headless mode
+    browser_type: Optional[Literal["chromium", "firefox", "webkit"]]  # Browser type for local Playwright
 
 
 def get_configuration_with_defaults(config: RunnableConfig) -> Dict[str, Any]:
@@ -101,22 +108,22 @@ def get_configuration_with_defaults(config: RunnableConfig) -> Dict[str, Any]:
     """
 
     configurable_fields = config.get("configurable", {})
-    scrapybara_api_key = (
-        configurable_fields.get("scrapybara_api_key")
-        or config.get("scrapybara_api_key")
-        or os.environ.get("SCRAPYBARA_API_KEY")
-    )
     timeout_hours = configurable_fields.get("timeout_hours", 1)
     zdr_enabled = configurable_fields.get("zdr_enabled", False)
     auth_state_id = configurable_fields.get("auth_state_id", None)
     environment = configurable_fields.get("environment", "web")
     prompt = configurable_fields.get("prompt", None)
+    use_local_playwright = configurable_fields.get("use_local_playwright", False)
+    headless = configurable_fields.get("headless", False)
+    browser_type = configurable_fields.get("browser_type", "chromium")
 
     return {
-        "scrapybara_api_key": scrapybara_api_key,
         "timeout_hours": timeout_hours,
         "zdr_enabled": zdr_enabled,
         "auth_state_id": auth_state_id,
         "environment": environment,
         "prompt": prompt,
+        "use_local_playwright": use_local_playwright,
+        "headless": headless,
+        "browser_type": browser_type,
     }

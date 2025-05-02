@@ -28,7 +28,6 @@ def get_openai_env_from_state_env(env: str) -> str:
         return "windows"
 
 
-# Scrapybara does not allow for configuring this. Must use a hardcoded value.
 DEFAULT_DISPLAY_WIDTH = 1024
 DEFAULT_DISPLAY_HEIGHT = 768
 
@@ -51,6 +50,8 @@ async def call_model(state: CUAState, config: RunnableConfig) -> Dict[str, Any]:
     Returns:
         The updated state with the model's response.
     """
+    import logging
+    logger = logging.getLogger(__name__)
     configuration = get_configuration_with_defaults(config)
     environment = configuration.get("environment")
     zdr_enabled = configuration.get("zdr_enabled")
@@ -82,21 +83,35 @@ async def call_model(state: CUAState, config: RunnableConfig) -> Dict[str, Any]:
     }
     llm_with_tools = llm.bind_tools([tool])
 
-    response: AIMessageChunk
-
-    # Check if the last message is a tool message
-    if last_message and getattr(last_message, "type", None) == "tool" and zdr_enabled is False:
-        if previous_response_id is None:
-            raise ValueError("Cannot process tool message without a previous_response_id")
-
-        # Only pass the tool message to the model
-        response = await llm_with_tools.ainvoke([last_message])
-    else:
-        # Pass all messages to the model
-        if prompt is None:
-            response = await llm_with_tools.ainvoke(messages)
+    response = None
+    
+    try:
+        # Check if the last message is a tool message
+        if last_message and getattr(last_message, "type", None) == "tool" and zdr_enabled is False:
+            if previous_response_id is None:
+                logger.error("Cannot process tool message without a previous_response_id", stack_info=True)
+                # Create a fallback response instead of raising an exception
+                from langchain_core.messages import AIMessage
+                response = AIMessage(content="I'm having trouble processing your request with the browser. Please try again or provide a different instruction.")
+            else:
+                # Only pass the tool message to the model
+                response = await llm_with_tools.ainvoke([last_message])
         else:
-            response = await llm_with_tools.ainvoke([prompt, *messages])
+            # Pass all messages to the model
+            if prompt is None:
+                response = await llm_with_tools.ainvoke(messages)
+            else:
+                response = await llm_with_tools.ainvoke([prompt, *messages])
+    except Exception as e:
+        logger.error(f"Error calling OpenAI model: {str(e)}", stack_info=True)
+        # Create a fallback response
+        from langchain_core.messages import AIMessage
+        response = AIMessage(content="I encountered an error when trying to access the browser. Please check your API keys and try again.")
+    
+    if response is None:
+        logger.error("No response was generated", stack_info=True)
+        from langchain_core.messages import AIMessage
+        response = AIMessage(content="No response was generated. Please try again.")
 
     return {
         "messages": response,

@@ -1,36 +1,43 @@
-from typing import Any, Union
+from typing import Any, Union, Optional
+import logging
 
 from langchain_core.runnables import RunnableConfig
-from scrapybara import Scrapybara
-from scrapybara.client import BrowserInstance, UbuntuInstance, WindowsInstance
 
+# Import only from our local Playwright client
+from .playwright_client import PlaywrightClient, BrowserInstance, UbuntuInstance, WindowsInstance
 from .types import get_configuration_with_defaults
 
+# Set up logger
+logger = logging.getLogger(__name__)
 
-def get_scrapybara_client(api_key: str) -> Scrapybara:
+# Singleton instance of PlaywrightClient to ensure we reuse the same client
+_playwright_client_instance = None
+
+
+def get_browser_client(use_local_playwright: bool = True):
     """
-    Gets the Scrapybara client, using the API key provided.
+    Gets a local Playwright client.
+    Uses a singleton pattern to ensure we reuse the same client instance.
 
     Args:
-        api_key: The API key for Scrapybara.
+        use_local_playwright: Should always be True now that we only support local Playwright.
 
     Returns:
-        The Scrapybara client.
+        A PlaywrightClient instance.
     """
-    if not api_key:
-        raise ValueError(
-            "Scrapybara API key not provided. Please provide one in the configurable fields, "
-            "or set it as an environment variable (SCRAPYBARA_API_KEY)"
-        )
-    client = Scrapybara(api_key=api_key)
-    return client
+    global _playwright_client_instance
+    
+    if _playwright_client_instance is None:
+        logger.info("Creating new PlaywrightClient instance")
+        print("Using local Playwright")
+        _playwright_client_instance = PlaywrightClient()
+    
+    return _playwright_client_instance
 
 
-def get_instance(
-    id: str, config: RunnableConfig
-) -> Union[UbuntuInstance, BrowserInstance, WindowsInstance]:
+def get_instance(id: str, config: RunnableConfig) -> Union[BrowserInstance, UbuntuInstance, WindowsInstance]:
     """
-    Gets an instance by its ID from Scrapybara.
+    Gets an instance by its ID from local Playwright.
 
     Args:
         id: The ID of the instance to get.
@@ -39,9 +46,7 @@ def get_instance(
     Returns:
         The instance.
     """
-    configuration = get_configuration_with_defaults(config)
-    scrapybara_api_key = configuration.get("scrapybara_api_key")
-    client = get_scrapybara_client(scrapybara_api_key)
+    client = get_browser_client()
     return client.get(id)
 
 
