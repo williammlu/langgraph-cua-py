@@ -180,9 +180,10 @@ class PlaywrightBrowserInstance:
         
         # If screenshot failed, create a small fallback image
         try:
-            # Create a 1x1 transparent pixel as JPEG
-            fallback_image = base64.b64encode(b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00\xff\xdb\x00C\x00\x03\x02\x02\x02\x02\x02\x03\x02\x02\x02\x03\x03\x03\x03\x04\x06\x04\x04\x04\x04\x04\x08\x06\x06\x05\x06\t\x08\n\n\t\x08\t\t\n\x0c\x0f\x0c\n\x0b\x0e\x0b\t\t\r\x11\r\x0e\x0f\x10\x10\x11\x10\n\x0c\x12\x13\x12\x10\x13\x0f\x10\x10\x10\xff\xc9\x00\x0b\x08\x00\x01\x00\x01\x01\x01\x11\x00\xff\xcc\x00\x06\x00\x10\x10\x05\xff\xda\x00\x08\x01\x01\x00\x00?\x00\xd2\xcf\x20\xff\xd9').decode("utf-8")
-            logger.warning("Using fallback 1x1 JPEG image since screenshot failed", stack_info=True)
+            # Create a valid 1x1 transparent PNG as fallback
+            # This is a properly encoded 1x1 transparent PNG
+            fallback_image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+            logger.warning("Using fallback 1x1 PNG image since screenshot failed", stack_info=True)
             return ComputerResponse(
                 action_result={"success": True, "screenshot": fallback_image}, 
                 base_64_image=fallback_image

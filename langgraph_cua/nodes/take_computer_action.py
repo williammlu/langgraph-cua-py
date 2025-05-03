@@ -89,7 +89,7 @@ def take_computer_action(state: CUAState, config: RunnableConfig) -> Dict[str, A
             logger = logging.getLogger(__name__)
             
             # Create static 1x1 PNG to use as fallback in case of failure
-            FALLBACK_PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC"
+            FALLBACK_PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
             
             try:
                 # Extract screenshot from response
